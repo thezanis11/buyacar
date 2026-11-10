@@ -1,0 +1,17 @@
+# Ne publier que le logiciel, sa conception et les études produites pour lui.
+/*
+!/.gitignore
+!/README.md
+!/application/
+!/conception/
+!/livrables/
+**/.env*
+**/*.pfx
+**/*.key
+**/*.pem
+**/*.db
+**/*.sqlite*
+**/__pycache__/
+
+# Raw third-party research captures are retained privately.
+/livrables/diagnostic-obd/recherche-web.json

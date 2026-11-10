@@ -1,0 +1,11 @@
+const {request}=require('@playwright/test');const fs=require('node:fs');const path=require('node:path');
+(async()=>{const api=await request.newContext({baseURL:'http://127.0.0.1:5198',extraHTTPHeaders:{'X-Auto-Request':'1'}});
+const login=await api.post('/api/login',{data:{password:'essai-local-automobile-123'}});if(!login.ok())throw Error('Connexion test impossible');
+let state=await(await api.get('/api/state')).json();const v=state.vehicles.find(v=>v.title==='Clio test parcours');v.text='Renault Clio 1.5 dCi, 2009, 200000 km, prix demandé 2000 euros. Aucun justificatif disponible.';
+await api.put('/api/vehicles/'+v.id,{data:v});state.preferences.aiEnabled=true;await api.put('/api/preferences',{data:state.preferences});
+const status=await(await api.get('/api/ai/status',{timeout:30000})).json();if(!status.available||!status.models.includes('gemma3:4b'))throw Error('Moteur local non démarré');
+const start=Date.now();const response=await api.post('/api/vehicles/'+v.id+'/analyze',{data:{documentId:null},timeout:300000});const analysis=await response.json();if(!response.ok())throw Error(JSON.stringify(analysis));
+const after=await(await api.get('/api/state')).json();const saved=after.vehicles.find(x=>x.id===v.id);if(saved.price!==2000||saved.analyses.length<=v.analyses.length)throw Error('Isolation de l’analyse échouée');
+const result={seconds:(Date.now()-start)/1000,result:analysis.result,priceUnchanged:saved.price===2000,scope:'Test de connexion et de persistance, pas une certification de qualité'};
+fs.writeFileSync(path.resolve(__dirname,'../test-results/ai-integration.json'),JSON.stringify(result,null,2));console.log('Intégration IA locale OK : modèle démarré, résultat conservé, prix inchangé. Durée '+result.seconds+' s.');
+state.preferences.aiEnabled=false;await api.put('/api/preferences',{data:state.preferences});await api.dispose();})().catch(e=>{console.error(e);process.exit(1)});

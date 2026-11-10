@@ -1,0 +1,13 @@
+.dotnet/
+.nuget/
+.cli/
+**/bin/
+**/obj/
+dist/
+data/
+test-data/
+*.log
+**/node_modules/
+test-results/
+.ollama/
+tools/python-packages/
